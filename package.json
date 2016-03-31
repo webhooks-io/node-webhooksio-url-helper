@@ -1,0 +1,15 @@
+{
+  "name": "webhooksio-url-helper",
+  "version": "1.0.0",
+  "description": "Takes a URL and converts it into a url that is dynamic for direct passthrough to the destination.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webhooksio",
+    "webhooks.io",
+  ],
+  "author": "Jason Fill",
+  "license": "MIT"
+}
