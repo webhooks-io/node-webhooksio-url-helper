@@ -7,9 +7,11 @@ var url = require('url');
  *
  * @param {Object} opts Object that is holding information that will be used to modify the url.
  * @param {String} opts.url The final destination URL
- * @param {String} opts.input The bucket the request should be proxied through.
  * @param {String} opts.proxy_hostname The domain that is being proxied to.
+ * @param {String} opts.input_id The bucket the request should be proxied through.
  * @param {String} opts.consumer_id The domain that is being proxied to.
+ * @param {String} opts.application_id The domain that is being proxied to.
+ * @param {String} opts.bucket_key The domain that is being proxied to.
  * @param {Function} callback A function for the callback accepting the following argument 'err, Result'.
  * @example
  *    function(err, Result){}
@@ -17,31 +19,19 @@ var url = require('url');
 
 var convert = function (opts) {
     var local = {};
+    // split the url in half using :// as the split location...
+    local.url_parts = opts.url.split('://');
 
-    // process the URL breaking it into the component parts...
-    local.url = url.parse(opts.url);
-
-    local.return = local.url.protocol + '//';
-
-    if (local.url.auth.length) {
-        local.return = local.return + local.url.auth + '@';
+    // if the url is to use an input.
+    if (opts.input_id) {
+        local.proxy_part = opts.proxy_hostname + '/' + opts.input_id + '/';
+    } else {
+        local.proxy_part = opts.proxy_hostname + '/' + opts.application_id + '/' + opts.consumer_id + '/' + opts.bucket_key + '/';
     }
-    // add the
-    local.return = local.return + local.url.hostname.replace(/\./g, '-') + '-' + opts.input + '.' + opts.proxy_hostname;
-
-    // if there is a port being used, append it to the url...
-    if (local.url.port) {
-        local.return = local.return + ':' + local.url.port;
-    }
-    // if the proxy requires a special path in the url, add it...
-    local.return = local.return + '/consumer/' + opts.consumer_id;
-    // add the path and query string back to the return url...
-    if (local.url.path) {
-        local.return = local.return + local.url.path;
-    }
-
-    // return the new domain...
-    return local.return;
+    // put the domain back together.
+    local.final_url = local.url_parts[0] + '://' + local.proxy_part + local.url_parts[1];
+    // return
+    return local.final_url;
 };
 
 /**
@@ -56,40 +46,41 @@ var convert = function (opts) {
  */
 
 var parse = function (incoming_url) {
-    var local = {};
+    var local = {
+        return: {
+            type: null,
+            input_id: null,
+            application_id: null,
+            consumer_id: null,
+            bucket_key:null,
+            destination_url: null
+        }
+    };
 
     // process the URL breaking it into the component parts...
     local.url = url.parse(incoming_url);
 
-    //extract the actual hostname;
-    local.org_hostname = local.url.hostname.split('-');
+    //console.log(local.url);
 
-    local.webhooks_subdomain = local.org_hostname[local.org_hostname.length-1].split('.')[0];
+    local.path_parts = local.url.path.split('/');
 
-    local.org_hostname.splice(local.org_hostname.length-1, 1);
+    local.return.type = local.path_parts[1].substring(0, 2);
 
-    local.target_hostname = local.org_hostname.join('.');
+    if (local.return.type === 'IN') {
+        local.return.input_id = local.path_parts[1];
+        local.path_parts.splice(0,2);
+    } else if (local.return.type === 'AP') {
+        local.return.application_id = local.path_parts[1];
+        local.return.consumer_id = local.path_parts[2];
+        local.return.bucket_key = local.path_parts[3];
+        local.path_parts.splice(0,4);
+    } else {
 
-    local.url.hostname = local.target_hostname;
-    local.url.host = local.target_hostname;
+    }
 
-    local.target_pathname = local.url.pathname.split('/');
 
-    local.consumer_id = local.target_pathname[2];
+    local.return.destination_url = local.url.protocol + '//' + local.path_parts.join('/');
 
-    local.target_pathname.splice(0, 3);
-
-    local.url.pathname = '/' + local.target_pathname.join('/');
-
-    local.url.path = local.url.pathname + '?' + local.url.query;
-
-    local.return = {
-        target_url : local.url.format(local.url),
-        consumer_id : local.consumer_id,
-        subdomain : local.webhooks_subdomain
-    };
-
-    // return the new domain...
     return local.return;
 };
 
