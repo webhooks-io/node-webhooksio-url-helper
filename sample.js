@@ -1,9 +1,9 @@
 var lib = require('./index.js');
 
 var opts = {
-    url : "https://api.mydomain.com/api/rest?key=0wo9834hp9h3",
-    input_id : "IN9000",
-    proxy_hostname : "gateway.webhooks.io"
+    url : "http://requestb.in/s2di4ps2",
+    input_id : "IN15fa3b06283747968b7f00f01be0e166",
+    proxy_hostname : "localhost:8001"
 };
 
 var result = lib.convert(opts);

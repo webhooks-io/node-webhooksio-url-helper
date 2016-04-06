@@ -1,6 +1,6 @@
 {
   "name": "webhooksio-url-helper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Takes a URL and converts it into a url that is dynamic for direct passthrough to the destination.",
   "main": "index.js",
   "scripts": {
